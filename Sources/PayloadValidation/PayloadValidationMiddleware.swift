@@ -2,13 +2,11 @@ import Vapor
 
 public struct PayloadValidationMiddleware: Middleware {
     
-    let secretToken: SymmetricKey
+    let secretToken: String
     private let headerName: HTTPHeaders.Name
     
     public init(secretToken: String, signatureHeaderName: String) {
-        let data = Array(secretToken.utf8)
-        self.secretToken = SymmetricKey(data: data)
-        
+        self.secretToken = secretToken
         self.headerName = HTTPHeaders.Name(signatureHeaderName)
     }
     
@@ -22,14 +20,9 @@ public struct PayloadValidationMiddleware: Middleware {
         return request.body.collect().unwrap(or: Abort(.noContent)).map { bytes -> Bool in
             let bodyData = Data(buffer: bytes)
             
-            return verify(signature: signatureData, messageBody: bodyData)
+            return PayloadValidation.verify(secretToken: secretToken, signature: signatureData, messageBody: bodyData)
         }
         .guard({ $0 }, else: Abort(.unauthorized))
         .flatMap { _ in next.respond(to: request) }
     }
-    
-    private func verify(signature: Data, messageBody: Data) -> Bool {
-        return HMAC<SHA256>.isValidAuthenticationCode(signature, authenticating: messageBody, using: secretToken)
-    }
 }
-
