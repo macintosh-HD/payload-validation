@@ -11,7 +11,7 @@ public struct PayloadValidationMiddleware: Middleware {
     }
     
     public func respond(to request: Request, chainingTo next: Responder) -> EventLoopFuture<Response> {
-        guard let requestSignature = request.headers.first(name: headerName),
+        guard let requestSignature = request.headers.first(name: headerName)?.removePrefix("sha256="),
               let signatureData = Data(base64Encoded: requestSignature) else {
             request.logger.debug("No signature header supplied.")
             return request.eventLoop.future(error: Abort(.badRequest))

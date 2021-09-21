@@ -7,4 +7,9 @@ extension String {
         let key = SymmetricKey(data: data)
         return key
     }
+    
+    func removePrefix(_ prefix: String) -> String {
+        guard hasPrefix(prefix) else { return self }
+        return String(dropFirst(prefix.count))
+    }
 }
